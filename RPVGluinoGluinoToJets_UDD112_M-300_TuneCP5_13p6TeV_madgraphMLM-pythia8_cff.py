@@ -22,7 +22,7 @@
 # resonance mass and the decay table will disagree.
 # ---------------------------------------------------------------------------
 
-MASS_POINT   = 1000    # GeV -- gluino mass; must match the gridpack param_card
+MASS_POINT   = 300    # GeV -- gluino mass; must match the gridpack param_card
 GLUINO_WIDTH = 1.0     # GeV -> ctau ~ 2e-13 mm, i.e. prompt decay
 NJETMAX      = 2       # highest-multiplicity ME in the gridpack is p p > go go j
 
@@ -155,7 +155,7 @@ generator = cms.EDFilter("Pythia8ConcurrentHadronizerFilter",
 #
 externalLHEProducer = cms.EDProducer("ExternalLHEProducer",
     args = cms.vstring('/eos/user/j/jlawless/genproductions_scripts/bin/MadGraph5_aMCatNLO/'
-        'RPV_GluinoGluinoto6Q_M-1000_el8_amd64_gcc10_CMSSW_12_4_8_tarball.tar.xz'),
+        'RPV_GluinoGluinoto6Q_M-300_el8_amd64_gcc10_CMSSW_12_4_8_tarball.tar.xz'),
     nEvents = cms.untracked.uint32(50000),
     numberOfParameters = cms.uint32(1),
     outputFile = cms.string('cmsgrid_final.lhe'),
