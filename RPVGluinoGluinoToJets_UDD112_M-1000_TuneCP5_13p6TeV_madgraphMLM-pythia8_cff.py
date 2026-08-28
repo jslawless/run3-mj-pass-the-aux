@@ -2,8 +2,9 @@
 # RPV gluino pair production, gluino -> u d s  (lambda''_112, "UDD112"), prompt.
 #
 #   Production : MadGraph5_aMC@NLO 2.9.18 + RPVMSSM_UFO
-#                  generate p p > go go   @0
-#                  add process p p > go go j @1        (MLM merged)
+#                  generate p p > go go      @0
+#                  add process p p > go go j  @1       (MLM merged)
+#                  add process p p > go go j j @2
 #                -> the gridpack contains UNDECAYED gluino pairs.
 #   Decay      : Pythia8, from the SLHA table below.  The gluino is a Majorana
 #                fermion, so BR(go -> u d s) = BR(go -> u~ d~ s~) = 0.5.
@@ -24,19 +25,8 @@
 
 MASS_POINT   = 1000    # GeV -- gluino mass; must match the gridpack param_card
 GLUINO_WIDTH = 1.0     # GeV -> ctau ~ 2e-13 mm, i.e. prompt decay
-NJETMAX      = 2       # highest-multiplicity ME in the gridpack is p p > go go j
-
-# MLM merging scale used by Pythia.  This must be tied to the run_card xqcut of
-# the gridpack (rule of thumb qCut ~ 1.5-2 x xqcut).  The value below assumes
-# xqcut = 30, following the RPVStopStopToJets_UDD323 Run-3 request
-# (st_jj_rpv_LO_UDD323_MassFix_M1-*_xqcut30 + the qCut50 hadronizer).
-#
-# >>> The current RPV_GluinoGluinoto6Q run_card has xqcut = 10, which is very
-# >>> low for a ~1 TeV coloured resonance.  Either regenerate the gridpack with
-# >>> xqcut = 30 and keep qCut = 50 below, or keep xqcut = 10 and drop qCut to
-# >>> ~15-20 and expect a poor matching efficiency.  Do not leave them
-# >>> inconsistent.
-QCUT = 30.
+NJETMAX      = 2       # highest-multiplicity ME is p p > go go j j
+QCUT         = 30.     # MLM merging scale; gridpack run_card has xqcut = 30
 
 SLHA_TABLE = """
 BLOCK MASS  # Mass spectrum: everything except the gluino is decoupled
@@ -149,9 +139,8 @@ generator = cms.EDFilter("Pythia8ConcurrentHadronizerFilter",
 )
 
 # ---------------------------------------------------------------------------
-# For LOCAL testing only.  McM prepends its own externalLHEProducer from the
-# gridpack field of the request, so this block must NOT be part of the fragment
-# that goes into the merge request.
+# Hadronizer only: the LHE comes from --filein (or from McM's own
+# externalLHEProducer).  Uncomment to run the gridpack locally with --step LHE.
 #
 externalLHEProducer = cms.EDProducer("ExternalLHEProducer",
     args = cms.vstring('/eos/user/j/jlawless/genproductions_scripts/bin/MadGraph5_aMCatNLO/'
