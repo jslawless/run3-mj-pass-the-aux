@@ -23,10 +23,10 @@
 # resonance mass and the decay table will disagree.
 # ---------------------------------------------------------------------------
 
-MASS_POINT   = 1000    # GeV -- gluino mass; must match the gridpack param_card
+MASS_POINT   = 2000  # GeV -- gluino mass; must match the gridpack param_card
 GLUINO_WIDTH = 1.0     # GeV -> ctau ~ 2e-13 mm, i.e. prompt decay
 NJETMAX      = 2       # highest-multiplicity ME is p p > go go j j
-QCUT         = 30.     # MLM merging scale; gridpack run_card has xqcut = 30
+QCUT         = 80.   # MLM merging scale; gridpack run_card has xqcut = 30
 
 SLHA_TABLE = """
 BLOCK MASS  # Mass spectrum: everything except the gluino is decoupled
@@ -139,15 +139,15 @@ generator = cms.EDFilter("Pythia8ConcurrentHadronizerFilter",
 )
 
 # ---------------------------------------------------------------------------
-# Hadronizer only: the LHE comes from --filein (or from McM's own
-# externalLHEProducer).  Uncomment to run the gridpack locally with --step LHE.
+# Uncomment for --step LHE; leave commented for --step GEN with --filein, and
+# for McM.
 #
-externalLHEProducer = cms.EDProducer("ExternalLHEProducer",
-    args = cms.vstring('/eos/user/j/jlawless/genproductions_scripts/bin/MadGraph5_aMCatNLO/'
-        'RPV_GluinoGluinoto6Q_M-1000_el8_amd64_gcc10_CMSSW_12_4_8_tarball.tar.xz'),
-    nEvents = cms.untracked.uint32(50000),
-    numberOfParameters = cms.uint32(1),
-    outputFile = cms.string('cmsgrid_final.lhe'),
-    scriptName = cms.FileInPath('GeneratorInterface/LHEInterface/data/run_generic_tarball_cvmfs.sh')
-)
+# externalLHEProducer = cms.EDProducer("ExternalLHEProducer",
+#     args = cms.vstring('/eos/user/j/jlawless/genproductions_scripts/bin/MadGraph5_aMCatNLO/'
+#         'RPV_GluinoGluinoto6Q_M-2000_el8_amd64_gcc10_CMSSW_12_4_8_tarball.tar.xz'),
+#     nEvents = cms.untracked.uint32(20000),
+#     numberOfParameters = cms.uint32(1),
+#     outputFile = cms.string('cmsgrid_final.lhe'),
+#     scriptName = cms.FileInPath('GeneratorInterface/LHEInterface/data/run_generic_tarball_cvmfs.sh')
+# )
 # ---------------------------------------------------------------------------
