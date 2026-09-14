@@ -1,38 +1,36 @@
-# ---------------------------------------------------------------------------
-# RPV gluino pair production, gluino -> u d s  (lambda''_112, "UDD112"), prompt.
+# RPV gluino pair -> 6 quarks (lambda''_112, "UDD112"), prompt, 13.6 TeV Run 3.
 #
-#   TEMPLATE -- %MASS% and %QCUT% are filled in by submit_gen_qcut_scan.py.
-#   Hadronizer only; the LHE arrives via --filein.
+# Single fragment for the full LHE -> GEN -> SIM chain.  Set MASS_POINT below;
+# it selects the gridpack tarball and the SLHA gluino mass together.
 #
-#   Production : MadGraph5_aMC@NLO 2.9.18 + RPVMSSM_UFO
-#                  generate p p > go go      @0
-#                  add process p p > go go j  @1       (MLM merged)
-#                  add process p p > go go j j @2
-#                -> the gridpack contains UNDECAYED gluino pairs.
-#   Decay      : Pythia8, from the SLHA table below.  The gluino is a Majorana
-#                fermion, so BR(go -> u d s) = BR(go -> u~ d~ s~) = 0.5.
-#   Tune       : CP5, Run-3 13.6 TeV (MCTunesRun3ECM13p6TeV).
+#   cmsDriver.py Configuration/GenProduction/python/RPVGluinoGluinoToJets_UDD112_TuneCP5_13p6TeV_madgraphMLM-pythia8_wmLHEGS_cff.py \
+#     --python_filename RPV_wmLHEGS_cfg.py \
+#     --eventcontent RAWSIM,LHE --datatier GEN-SIM,LHE \
+#     --fileout file:RPV_wmLHEGS.root \
+#     --step LHE,GEN,SIM --geometry DB:Extended \
+#     --conditions 150X_mcRun3_2024_realistic_v2 --beamspot DBrealistic \
+#     --era Run3_2024 \
+#     --customise Configuration/DataProcessing/Utils.addMonitoring \
+#     --no_exec --mc -n 1000
 #
-# Modelled on the following fragments in this repository:
-#   genFragments/Hadronizer/13p6TeV/Hadronizer_TuneCP5_13p6TeV_MLM_5f_max1j_LHE_qCut50_pythia8_cff.py
-#       -- used by RPVStopStopToJets_UDD323_M-*_TuneCP5_13p6TeV_madgraphMLM-pythia8
-#          (requestTickets/Run3/Jets+X/20231229_dgadkari_st_jj_rpv_UDD323)
-#   genFragments/Hadronizer/13p6TeV/LLstau/LLstau_M400_ctau1mm_TuneCP5_13p6TeV_pythia8_cff.py
-#       -- gridpack + SLHATableForPythia8 + MLM in one fragment
-#
-# CMSSW hands SLHATableForPythia8 to Pythia as an external SLHA file, which
-# takes precedence over the param_card embedded in the LHE header.  The gluino
-# mass here MUST therefore agree with the gridpack's param_card, or the LHE
-# resonance mass and the decay table will disagree.
-# ---------------------------------------------------------------------------
+# Production: MG5_aMC 2.9.18 + RPVMSSM_UFO, MLM-merged, undecayed gluino pairs
+#   generate p p > go go /sups @0 ; + j @1 ; + j j @2
+# Decay: Pythia8 from the SLHA table below; Majorana gluino, so the two modes
+# are 50/50.
 
-MASS_POINT   = %MASS%  # GeV -- gluino mass; must match the gridpack param_card
-GLUINO_WIDTH = 1.0     # GeV -> ctau ~ 2e-13 mm, i.e. prompt decay
-NJETMAX      = 2       # highest-multiplicity ME is p p > go go j j
-QCUT         = %QCUT%  # MLM merging scale; gridpack run_card has xqcut = 30
+MASS_POINT   = 1000   # GeV. Drives GRIDPACK and the SLHA gluino mass.
+N_EVENTS     = 1000   # must equal the cmsDriver -n
+QCUT         = 50.    # MLM merging scale. run_card xqcut = 30.
+GLUINO_WIDTH = 1.0    # GeV -> ctau ~ 2e-13 mm, prompt by fiat
+NJETMAX      = 2      # highest-multiplicity ME is p p > go go j j
+NQMATCH      = 4      # gridpack is 4-flavour (run_card maxjetflavor = 4)
+
+GRIDPACK = ('/eos/user/j/jlawless/genproductions_scripts/bin/MadGraph5_aMCatNLO/'
+            'RPV_GluinoGluinoto6Q_M-%d_el8_amd64_gcc10_CMSSW_12_4_8_tarball.tar.xz'
+            % MASS_POINT)
 
 SLHA_TABLE = """
-BLOCK MASS  # Mass spectrum: everything except the gluino is decoupled
+BLOCK MASS  # everything except the gluino is decoupled
 # PDG code           mass       particle
    1000001     1.00000000E+05   # ~d_L
    2000001     1.00000000E+05   # ~d_R
@@ -106,6 +104,14 @@ from Configuration.Generator.PSweightsPythia.PythiaPSweightsSettings_cfi import 
 slhatable = SLHA_TABLE.replace('%MGLUINO%', '%e' % MASS_POINT)
 slhatable = slhatable.replace('%WGLUINO%', '%e' % GLUINO_WIDTH)
 
+externalLHEProducer = cms.EDProducer("ExternalLHEProducer",
+    args = cms.vstring(GRIDPACK),
+    nEvents = cms.untracked.uint32(N_EVENTS),
+    numberOfParameters = cms.uint32(1),
+    outputFile = cms.string('cmsgrid_final.lhe'),
+    scriptName = cms.FileInPath('GeneratorInterface/LHEInterface/data/run_generic_tarball_cvmfs.sh')
+)
+
 generator = cms.EDFilter("Pythia8ConcurrentHadronizerFilter",
     maxEventsToPrint = cms.untracked.int32(1),
     pythiaPylistVerbosity = cms.untracked.int32(1),
@@ -125,12 +131,12 @@ generator = cms.EDFilter("Pythia8ConcurrentHadronizerFilter",
             'JetMatching:etaJetMax = 5.',
             'JetMatching:coneRadius = 1.',
             'JetMatching:slowJetPower = 1',
-            'JetMatching:qCut = %.0f' % QCUT,   # this is the actual merging scale
-            'JetMatching:nQmatch = 5',          # 5-flavour scheme
-            'JetMatching:nJetMax = %d' % NJETMAX,  # partons in the highest-multiplicity ME
-            'JetMatching:doShowerKt = off',     # off for MLM matching
+            'JetMatching:qCut = %.0f' % QCUT,
+            'JetMatching:nQmatch = %d' % NQMATCH,
+            'JetMatching:nJetMax = %d' % NJETMAX,
+            'JetMatching:doShowerKt = off',
             '6:m0 = 172.5',
-            '1000021:mayDecay = on',            # decay the gluino from the LHE
+            '1000021:mayDecay = on',
             'Check:abortIfVeto = on',
         ),
         parameterSets = cms.vstring('pythia8CommonSettings',
@@ -140,3 +146,5 @@ generator = cms.EDFilter("Pythia8ConcurrentHadronizerFilter",
                                     )
     )
 )
+
+ProductionFilterSequence = cms.Sequence(generator)
