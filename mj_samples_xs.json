@@ -42,5 +42,13 @@
     "QCD-4Jets_HT-2000_TuneCP5_13p6TeV_madgraphMLM-pythia8": {
         "xs_pb": 26.49,
         "sig_pb": 0.0807
+    },
+    "RPV_M300": {
+        "xs_pb": 637.6,
+        "sig_pb": 37.5546
+    },
+    "RPV_M1000": {
+        "xs_pb": 0.4842,
+        "sig_pb": 0.046483
     }
 }
